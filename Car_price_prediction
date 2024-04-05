@@ -1,0 +1,202 @@
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+df=pd.read_csv("/content/car price.zip")
+
+df.head()
+
+df.shape
+
+df.isnull().sum()
+
+df.info()
+
+df.describe()
+
+df.duplicated().sum()
+
+df.drop_duplicates(inplace=True)
+df.duplicated().sum()
+
+plt.figure(figsize=(25,20))
+sns.countplot(y="Car_Name",data=df,palette="Set1")
+plt.show()
+
+plt.figure(figsize=(15,10))
+sns.countplot(y="Year",data=df,palette="Set1")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.countplot(y="Fuel_Type",data=df,palette="Set1")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.countplot(y="Selling_type",data=df,palette="hsv")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.countplot(y="Transmission",data=df,palette="brg")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.countplot(y="Owner",data=df,palette="brg")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.scatterplot(data=df, x="Year", y="Selling_Price", hue="Selling_type")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.scatterplot(data=df, x="Year", y="Present_Price", hue="Selling_type")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.scatterplot(data=df, x="Selling_Price", y="Present_Price", hue="Selling_type")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.histplot(data=df, x="Selling_Price", kde=True,hue="Selling_type")
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.histplot(data=df, x="Driven_kms", kde=True,hue="Fuel_Type")
+plt.show()
+
+col=["Car_Name","Fuel_Type","Selling_type","Transmission"]
+from sklearn.preprocessing import LabelEncoder
+label_encoder = LabelEncoder()
+for x in col:
+    df[x]=label_encoder.fit_transform(df[x])
+
+scale=["Car_Name","Year","Selling_Price","Present_Price","Driven_kms"]
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+df[scale]=scaler.fit_transform(df[scale])
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingRegressor
+X=df.drop(columns="Selling_Price",axis=1)
+Y=df["Selling_Price"]
+x_train, x_test, y_train, y_test=train_test_split(X,Y,test_size=0.2,random_state=42)
+
+gb_regressor = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, max_depth=5, random_state=42)
+gb_regressor.fit(x_train,y_train)
+pred1=gb_regressor.predict(x_test)
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import numpy as np
+
+mae = mean_absolute_error(y_test,pred1)
+print("Mean Absolute Error (MAE):", mae)
+print("==============================================================================")
+mse = mean_squared_error(y_test,pred1)
+print("Mean Squared Error (MSE):", mse)
+print("==============================================================================")
+r2 = r2_score(y_test,pred1)
+print("R-squared (R2) Score:", r2)
+print("==============================================================================")
+def mean_absolute_percentage_error(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+mape = mean_absolute_percentage_error(y_test,pred1)
+print("Mean Absolute Percentage Error (MAPE):", mape)
+
+plt.figure(figsize=(10, 6))
+sns.regplot(x=y_test, y=pred1, color="navy",marker="*",label="best_fit_line")
+plt.title('Actual vs Predicted Selling Price')
+plt.xlabel('Actual Test Values')
+plt.ylabel('Predicted Test Values')
+plt.show()
+
+importances = gb_regressor.feature_importances_
+feature_names = X.columns
+sorted_indices = np.argsort(importances)
+plt.figure(figsize=(10, 6))
+plt.bar(range(len(feature_names)), importances[sorted_indices], align='center')
+plt.xticks(range(len(feature_names)), feature_names[sorted_indices], rotation=90)
+plt.xlabel('Feature')
+plt.ylabel('Importance')
+plt.title('Feature Importances')
+plt.show()
+
+from sklearn.ensemble import RandomForestRegressor
+rf_regressor = RandomForestRegressor(n_estimators=100, random_state=42)
+rf_regressor.fit(x_train,y_train)
+pred2=rf_regressor.predict(x_test)
+
+mae = mean_absolute_error(y_test,pred2)
+print("Mean Absolute Error (MAE):", mae)
+print("==============================================================================")
+mse = mean_squared_error(y_test,pred2)
+print("Mean Squared Error (MSE):", mse)
+print("==============================================================================")
+r2 = r2_score(y_test,pred2)
+print("R-squared (R2) Score:", r2)
+print("==============================================================================")
+def mean_absolute_percentage_error(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+mape = mean_absolute_percentage_error(y_test,pred2)
+print("Mean Absolute Percentage Error (MAPE):", mape)
+
+plt.figure(figsize=(10, 6))
+sns.regplot(x=y_test, y=pred2, color="red",marker="P",label="best_fit_line")
+plt.title('Actual vs Predicted Selling Price')
+plt.xlabel('Actual Test Values')
+plt.ylabel('Predicted Test Values')
+plt.show()
+
+importances = rf_regressor.feature_importances_
+feature_names = X.columns
+sorted_indices = np.argsort(importances)
+plt.figure(figsize=(10, 6))
+plt.bar(range(len(feature_names)), importances[sorted_indices], align='center')
+plt.xticks(range(len(feature_names)), feature_names[sorted_indices], rotation=90)
+plt.xlabel('Feature')
+plt.ylabel('Importance')
+plt.title('Feature Importances')
+plt.show()
+
+from sklearn.tree import DecisionTreeRegressor
+dt_regressor = DecisionTreeRegressor(random_state=42,max_depth=5)
+dt_regressor.fit(x_train, y_train)
+pred3 = dt_regressor.predict(x_test)
+
+mae = mean_absolute_error(y_test,pred3)
+print("Mean Absolute Error (MAE):", mae)
+print("==============================================================================")
+mse = mean_squared_error(y_test,pred3)
+print("Mean Squared Error (MSE):", mse)
+print("==============================================================================")
+r2 = r2_score(y_test,pred3)
+print("R-squared (R2) Score:", r2)
+print("==============================================================================")
+def mean_absolute_percentage_error(y_true, y_pred):
+    y_true, y_pred = np.array(y_true), np.array(y_pred)
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+mape = mean_absolute_percentage_error(y_test,pred3)
+print("Mean Absolute Percentage Error (MAPE):", mape)
+
+plt.figure(figsize=(10, 6))
+sns.regplot(x=y_test, y=pred2, color="green",marker="H",label="best_fit_line")
+plt.title('Actual vs Predicted Selling Price')
+plt.xlabel('Actual Test Values')
+plt.ylabel('Predicted Test Values')
+plt.show()
+
+
+importances = dt_regressor.feature_importances_
+feature_names = X.columns
+sorted_indices = np.argsort(importances)
+plt.figure(figsize=(10, 6))
+plt.bar(range(len(feature_names)), importances[sorted_indices], align='center')
+plt.xticks(range(len(feature_names)), feature_names[sorted_indices], rotation=90)
+plt.xlabel('Feature')
+plt.ylabel('Importance')
+plt.title('Feature Importances')
+plt.show()
